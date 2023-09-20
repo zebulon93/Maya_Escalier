@@ -1,0 +1,249 @@
+/* --------------------------------------------- */
+/* CODE DE GENERATION D'UN ESCALIER EN COLIMACON */
+/* --------------------------------------------- */
+
+
+    // VARIABLES //
+        
+        // Hauteur d'une marche
+            global int $hauteur_marche = 20;
+        // Variable pour tester si l'on doit fermer la fenetre apres generation    
+            global int $generation_et_fermeture = 0;
+        // Nombre de marche demande    
+            global int $nb_marche_valeur;
+        // Hauteur de l'escalier demande    
+            global float $hauteur_valeur;
+            
+            
+    // CORPS DU CODE //
+    
+        /* FENETRE */
+        
+    
+        // Si la fenetre existe, on la ferme pour la reouvrir
+            if (`window -exists fenetre_generateur_escalier`) 
+             {
+                deleteUI fenetre_generateur_escalier; 
+             }
+        
+        // Supprime la taille de la fenetre precedente (reinitialisation de la taille de la fenetre)   
+            if (`windowPref -exists fenetre_generateur_escalier`)
+             {
+                windowPref -remove fenetre_generateur_escalier;
+             }
+
+        // Creation de la fenetre
+	        window -t "Générateur d'escalier en colimaçon" -wh 520 170 -topEdge 430 -leftEdge 700 fenetre_generateur_escalier;
+	        
+	        
+	    /* ORGANISATION A L'INTERIEUR DE LA FENETRE */
+	      
+
+	    // Creation d'un layout (zone principale pour ajouter des elements)
+	        columnLayout choix;
+
+	    // Texte "Generation d'un escalier" 
+	        text -label "\n";
+	        text -label "                                                            Generation d'un escalier : \n";
+	
+	    // Creation d'un layout 'grille à deux colonnes' (sous-zone pour ajouter des elements ;
+	    // enfant de 'columnLayout') pour y ajouter des elements ;
+	    // dans notre cas les radio bouttons et les espaces d'insertion de valeurs	
+	        gridLayout -numberOfColumns 3 -cellWidthHeight 130 25; 
+	        
+	        
+	    /* RADIO BOUTTONS */    
+	    
+    
+        // Creation d'une collection (zone pour radio boutton) de radio bouton, 
+        // qui contiendra les radio bouttons
+	        $radio_button_choix = `radioCollection`;
+		
+	    // Ajout de radio boutons a la collection (que l'on testera au niveau actif ou non pour griser la bonne case de valeur),
+	    // suivis d'une case pour insérer une valeur
+	        text -label " "; //remplissage de la premiere colonne, premiere case, de 'gridLayout' avec un espace
+	    // Radio boutton '$nb_marche' qui grise la bonne case si actif ou non
+	        $nb_marche  = `radioButton -label "Nombre de marche" -onCommand "radio_button_nb_marche_actif" -offCommand "radio_button_nb_marche_inactif"`;  
+	        intField nb_marche;
+	        text -label " "; //remplissage de la premiere colonne, seconde case, de 'gridLayout' avec un espace
+	        $hauteur = `radioButton -label "Hauteur"`;
+	        floatField hauteur;
+	
+	    // Le radio boutton "nombre de marche" sera choisi a l'ouverture de la fenetre
+	        radioCollection -edit -select $nb_marche $radio_button_choix;
+
+	    // Saut d'une ligne    
+	        text -label "\n";
+	        
+	        
+	    /* ORGANISATION A L'INTERIEUR DE LA FENETRE */
+	    
+	    
+	    // On attribue le parent de la prochaine sous-zone en remontant dans l'arborescence des sous-zones (layouts) 
+	    // cree dans la fenetre
+	    // Par conséquent, la prochaine sous-zone sera enfant de 'columnLayout'
+	    // Car sinon, sans ça, si l'on cre une nouvelle sous-zone, celle-ci sera enfant de la sous-zone 'gridLayout' 
+	        setParent ..;
+	
+	    // Creation d'un tableau a trois colonnes pour y ajouter un element par colonne ;
+	    // (autre sous-zone pour ajouter des elements ; enfant de 'columnLayout') 
+	    // dans notre cas les trois boutons  
+	        rowLayout -numberOfColumns 3 -columnAlign3 "center" "center" "center";
+	    
+	    
+	    /* BOUTTONS */
+	    
+	    
+	    // Creation du boutton qui lancera la generation de l'escalier et fermera la fenetre
+	    // On attribue la valeur '1' a '$generation_et_fermeture' pour savoir qu'il faut fermer
+	    // la fenetre apres generation de l'escalier
+            button -width 170 -command "generation_fenetre($generation_et_fermeture=1, $hauteur_marche)" "Generer et fermer";
+        // Creation du boutton qui lancera seulement la generation de l'escalier
+            button -width 170 -command "generation_fenetre($generation_et_fermeture, $hauteur_marche)" "Generer";
+        // Creation du boutton qui fermera la fenetre
+            button -width 170 -command "fermeture_fenetre" "Fermer";
+        
+        
+        /* FENETRE */
+        
+        
+	    // Affiche la fenetre que l'on a cree
+	        showWindow fenetre_generateur_escalier;
+	        	    	        
+	    
+	// PROCEDURES //  
+	
+	    // Procedure pour  griser la case de valeur "hauteur"
+	    // et rendre accessible la case de valeur "nb_marche"
+	    // puisque le radio button "nb_marche" est actif
+	        proc radio_button_nb_marche_actif()
+	         {
+	            floatField -edit -enable false hauteur;
+	            intField -edit -enable true nb_marche;
+	         }
+	         
+	         
+	    // Procedure pour  griser la case de valeur "nb_marche"
+	    // et rendre accessible la case de valeur "hauteur"
+	    // puisque le radio button "hauteur" est actif
+	        proc radio_button_nb_marche_inactif()
+	         {
+	             intField -edit -enable false nb_marche;
+	             floatField -edit -enable true hauteur;  
+	         }
+	
+	
+	    // Procedure de creation de l'escalier et fermeture suivant bouton clique
+	        proc generation_fenetre(int $generation_et_fermeture, int $hauteur_marche)
+	         {
+	             int $valeur;
+	         
+	         // On recupere la valeur qui a ete inserer dans la case active
+	         // Si la case 'nb_marche' est active
+	             if(`intField -q -enable nb_marche` == true)
+	              {
+	                 $nb_marche_valeur = `intField -q -v nb_marche`;
+	                 $valeur = $nb_marche_valeur;
+	              }else{
+	                 $hauteur_valeur = `floatField -q -v hauteur`;
+	             // Calcul donnant un arrondi a l'entier inferieur
+	                 $valeur = $hauteur_valeur/$hauteur_marche;
+	              }
+	             
+	         // Si c'est le bouton 'generer' qui est clique
+	             if($generation_et_fermeture == 0)
+	              {
+	                  generation_escalier($valeur);
+	         // Si c'est le bouton 'generer et quitter' qui est clique    
+	              }else if ($generation_et_fermeture == 1){
+	                  generation_escalier($valeur);
+	                  fermeture_fenetre();
+	              }
+	         }
+	  
+	  
+	    // Procedure de fermeture de la fenetre    
+	        proc fermeture_fenetre()
+	         {
+	             deleteUI fenetre_generateur_escalier;
+	         }
+	         
+	         
+	    // Procedure de generation de l'escalier
+	        proc generation_escalier(int $valeur)
+	         {
+	             
+	             int $n = $valeur;
+ 
+ 
+             /* Creation des objets, positionnemt ... de ceux-ci pour creer un element de l'escalier */
+             
+             // Objet marche
+                 polyCube -w 20 -h 20 -d 50 -sx 1 -sy 1 -sz 1 -ax 0 1 0 -cuv 4 -ch 0 -n marche;
+                 select -cl;
+                 select -tgl marche.f[3];
+                 select -tgl marche.f[5];
+                 doDelete;
+                 select -r marche.vtx[4];
+                 move -13.286289 10 -24.625575;
+                 select -r marche.vtx[2];
+                 move -2.038737 10 24.092928;
+
+             // Objet lien
+                 polyCylinder -r 1 -h 2 -sx 20 -sy 1 -sz 1 -ax 0 1 0 -cuv 3 -ch 1 -n lien;
+                 setAttr "lien.rotateX" 90;
+                 move -r 2.7 0 45;
+                 scale -r 6.5 25 6.5;
+
+             // Objet poteau
+                 polyCylinder -r 1 -h 2 -sx 20 -sy 1 -sz 1 -ax 0 1 0 -rcp 0 -cuv 3 -ch 1 -n poteau;
+                 move -r 0 0 77.377781;
+                 setAttr "poteau.scaleX" 13;
+                 setAttr "poteau.scaleY" 10;
+                 setAttr "poteau.scaleZ" 13;
+
+             // Objet garde_corps1
+                 polyCylinder -r 1 -h 2 -sx 20 -sy 1 -sz 1 -ax 0 1 0 -rcp 0 -cuv 3 -ch 1 -n garde_corps1;
+                 setAttr "garde_corps1.scaleY" 27;
+                 setAttr "garde_corps1.translateY" 36;
+                 setAttr "garde_corps1.translateZ" -22;
+             // Objet garde_corps2
+                 polyCylinder -r 1 -h 2 -sx 20 -sy 1 -sz 1 -ax 0 1 0 -rcp 0 -cuv 3 -ch 1 -n garde_corps2;
+                 setAttr "garde_corps2.scaleY" 15.2;
+                 setAttr "garde_corps2.translateY" 36;
+                 setAttr "garde_corps2.translateZ" -22;
+                 rotate -r -os -fo 0 0 48.55;
+                 move -r 0 27 0;
+
+
+             /* Selection des objets d'un element pour en former un groupe 'element_1' */
+             
+                 select -r marche;
+                 select -r lien;
+                 select -r poteau;
+                 select -r garde_corps1;
+                 select -r garde_corps2;
+                 group -n element_1 marche lien poteau garde_corps1 garde_corps2;
+
+
+             /* Deplacement du point de pivot du groupe 'element_1' */
+             
+                 move -r 0 10 44.68889 element_1.scalePivot element_1.rotatePivot;
+
+
+             /* Duplication d'un element un n nombre de fois */
+             
+                 select -r element_1;
+             // Si l'utilisateur demande plus d'un element, alors il faut depliquer ce premier element
+                 if($n>1)
+                  {
+                     duplicate -rr; 
+                     rotate -r 0 13 0; 
+                     move -r 0 20 0; 
+                     
+                     for ($i=1; $i<$n-1; ++$i) 
+                      {
+                         duplicate -rr -st;
+                      }
+                  }
+             }
